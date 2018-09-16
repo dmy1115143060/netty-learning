@@ -10,6 +10,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.util.Iterator;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Created by DMY on 2018/9/14 11:29
@@ -18,6 +19,7 @@ import java.util.Iterator;
 public class PlainNioServer {
 
     public void server(int port) throws Exception {
+
         // 创建一个Channel，用于接收客户端的连接
         ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
         serverSocketChannel.configureBlocking(false);

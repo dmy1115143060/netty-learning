@@ -15,8 +15,23 @@ import io.netty.util.CharsetUtil;
 public class EchoServerHandler extends ChannelInboundHandlerAdapter {
 
     /**
+     * 当Channel已经注册到它的EventLoop并且能够处理IO时被调用
+     */
+    @Override
+    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+        System.out.println("Channel注册成功：" + ctx.channel() + ", " + ctx.channel().eventLoop());
+    }
+
+    /**
+     * 当Channel处于活动状态被调用；Channel已经连接/绑定并且已经就绪
+     */
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        System.out.println("Channel处于活动状态！");
+    }
+
+    /**
      * 对于每个客户端传入的消息都需要调用该方法进行处理：业务处理逻辑实现对接收到的消息进行输出并回传给客户端
-     *
      */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
