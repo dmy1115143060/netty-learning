@@ -10,18 +10,18 @@ import java.nio.channels.SocketChannel;
  * Created by DMY on 2018/9/17 17:12
  */
 public class Handler implements Runnable {
-    final SocketChannel socket;
-    final SelectionKey key;
-    ByteBuffer input = ByteBuffer.allocate(1024);
-    ByteBuffer output = ByteBuffer.allocate(1024);
-    static final int READING = 0, SENDING = 1;
-    int state = READING;
+    private final SocketChannel socketChannel;
+    private final SelectionKey selectionKey;
+    private ByteBuffer input = ByteBuffer.allocate(1024);
+    private ByteBuffer output = ByteBuffer.allocate(1024);
+    private static final int READING = 0, SENDING = 1;
+    private int state = READING;
 
-    public Handler(Selector selector, SocketChannel c) throws IOException {
-        socket = c;
-        socket.configureBlocking(false);
-        key = socket.register(selector, SelectionKey.OP_READ);
-        key.attach(this);
+    public Handler(Selector selector, SocketChannel socketChannel) throws IOException {
+        this.socketChannel = socketChannel;
+        socketChannel.configureBlocking(false);
+        selectionKey = socketChannel.register(selector, SelectionKey.OP_READ);
+        selectionKey.attach(this);
         selector.wakeup();
         System.out.println(selector + " connect success...");
     }
@@ -37,16 +37,16 @@ public class Handler implements Runnable {
         }
     }
 
-    boolean inputIsComplete() {
+    private boolean inputIsComplete() {
         return input.hasRemaining();
     }
 
-    boolean outputIsComplete() {
+    private boolean outputIsComplete() {
         return output.hasRemaining();
     }
 
-    void process() {
-        //读数据
+    private void process() {
+        // 读数据
         StringBuilder reader = new StringBuilder();
         input.flip();
         while (input.hasRemaining()) {
@@ -61,23 +61,23 @@ public class Handler implements Runnable {
         System.out.println("process .... ");
     }
 
-    void read() throws IOException {
-        socket.read(input);
+    private void read() throws IOException {
+        socketChannel.read(input);
         if (inputIsComplete()) {
             process();
             state = SENDING;
-            key.interestOps(SelectionKey.OP_WRITE);
+            selectionKey.interestOps(SelectionKey.OP_WRITE);
         }
     }
 
-    void send() throws IOException {
+    private void send() throws IOException {
         output.flip();
-        socket.write(output);
+        socketChannel.write(output);
         if (outputIsComplete()) {
-            key.cancel();
+            selectionKey.cancel();
         }
         state = READING;
-        key.interestOps(SelectionKey.OP_READ);
+        selectionKey.interestOps(SelectionKey.OP_READ);
     }
 
 }

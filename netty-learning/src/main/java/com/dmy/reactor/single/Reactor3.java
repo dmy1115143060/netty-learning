@@ -16,8 +16,9 @@ import java.util.concurrent.Executors;
  * Created by DMY on 2018/9/17 17:09
  */
 public class Reactor3 implements Runnable {
-    final Selector selector;
-    final ServerSocketChannel serverSocketChannel;
+
+    private final Selector selector;
+    private final ServerSocketChannel serverSocketChannel;
 
     public Reactor3(int port) throws IOException {
         selector = Selector.open();
@@ -67,12 +68,12 @@ public class Reactor3 implements Runnable {
     }
 
     class Handler3 implements Runnable {
-        final SocketChannel socket;
-        final SelectionKey key;
-        ByteBuffer input = ByteBuffer.allocate(1024);
-        ByteBuffer output = ByteBuffer.allocate(1024);
-        static final int READING = 0, SENDING = 1, PROCESSING = 3;
-        int state = READING;
+        private final SocketChannel socket;
+        private final SelectionKey key;
+        private ByteBuffer input = ByteBuffer.allocate(1024);
+        private ByteBuffer output = ByteBuffer.allocate(1024);
+        private static final int READING = 0, SENDING = 1, PROCESSING = 3;
+        private int state = READING;
         ExecutorService pool = Executors.newCachedThreadPool();
 
         public Handler3(Selector selector, SocketChannel c) throws IOException {
@@ -94,7 +95,10 @@ public class Reactor3 implements Runnable {
             }
         }
 
-        synchronized void read() throws IOException {
+        /**
+         * read操作使用线程池处理任务
+         */
+        private synchronized void read() throws IOException {
             socket.read(input);
             if (inputIsComplete()) {
                 state = PROCESSING;
@@ -102,7 +106,7 @@ public class Reactor3 implements Runnable {
             }
         }
 
-        void send() throws IOException {
+        private void send() throws IOException {
             output.flip();
             socket.write(output);
             if (outputIsComplete()) {
@@ -112,7 +116,7 @@ public class Reactor3 implements Runnable {
             key.interestOps(SelectionKey.OP_READ);
         }
 
-        void process() {
+        private void process() {
             //读数据
             StringBuilder reader = new StringBuilder();
             input.flip();
@@ -128,15 +132,15 @@ public class Reactor3 implements Runnable {
             System.out.println("process .... ");
         }
 
-        boolean inputIsComplete() {
+        private boolean inputIsComplete() {
             return input.hasRemaining();
         }
 
-        boolean outputIsComplete() {
+        private boolean outputIsComplete() {
             return output.hasRemaining();
         }
 
-        synchronized void processAndHandOff() {
+        private synchronized void processAndHandOff() {
             process();
             state = SENDING; // or rebind attachment
             key.interestOps(SelectionKey.OP_WRITE);

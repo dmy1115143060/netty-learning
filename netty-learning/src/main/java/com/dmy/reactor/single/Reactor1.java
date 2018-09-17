@@ -37,19 +37,18 @@ public class Reactor1 implements Runnable {
     public void run() {
         try {
             while (!Thread.interrupted()) {
-                // 等待事件
+                // 等待事件的到来，若无事件，则此时会阻塞
                 int n = selector.select();
                 if (n == 0)
                     continue;
-                Set<SelectionKey> set = selector.selectedKeys();
-                Iterator<SelectionKey> iterator = set.iterator();
+                Set<SelectionKey> selectionKeySet = selector.selectedKeys();
+                Iterator<SelectionKey> iterator = selectionKeySet.iterator();
                 // 处理所有Channel上面监听到的事件
                 while (iterator.hasNext()) {
-                    SelectionKey key = iterator.next();
-                    iterator.remove();
                     // 使用dispatch分发事件
-                    dispatch(key);
+                    dispatch(iterator.next());
                 }
+                selectionKeySet.clear();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -57,7 +56,7 @@ public class Reactor1 implements Runnable {
     }
 
     /**
-     * 分发事件
+     * 分发事件，将事件分发到对应的Handler中
      */
     private void dispatch(SelectionKey k) {
         // 获取当前的附加对象，实际上获取的是Acceptor实例对象
@@ -69,7 +68,7 @@ public class Reactor1 implements Runnable {
     class Acceptor implements Runnable {
         public void run() {
             try {
-                // 获取客户端的连接请求
+                // 获取客户端的连接请求,并获得对应的连接通道ScoketChannel
                 SocketChannel c = serverSocketChannel.accept();
                 if (c != null) {
                     System.out.println("New Connection ...");
@@ -81,22 +80,25 @@ public class Reactor1 implements Runnable {
         }
     }
 
+    /**
+     * 处理事件的Handler类
+     */
     final class Handler implements Runnable {
-        final SocketChannel socket;
-        final SelectionKey key;
+        final SocketChannel socketChannel;
+        final SelectionKey selectionKey;
         ByteBuffer input = ByteBuffer.allocate(1024);
         ByteBuffer output = ByteBuffer.allocate(1024);
         static final int READING = 0, SENDING = 1;
         int state = READING;
 
-        public Handler(Selector selector, SocketChannel c) throws IOException {
-            socket = c;
-            socket.configureBlocking(false);
+        public Handler(Selector selector, SocketChannel socketChannel) throws IOException {
+            this.socketChannel = socketChannel;
+            socketChannel.configureBlocking(false);
             // 向Selector注册Channel
-            key = socket.register(selector, 0);
-            key.attach(this);
-            // 注册可读事件
-            key.interestOps(SelectionKey.OP_READ);
+            selectionKey = socketChannel.register(selector, 0);
+            selectionKey.attach(this);
+            // 注册可读事件并唤醒selector
+            selectionKey.interestOps(SelectionKey.OP_READ);
             selector.wakeup();
         }
 
@@ -136,22 +138,22 @@ public class Reactor1 implements Runnable {
         }
 
         void read() throws IOException {
-            socket.read(input);
+            socketChannel.read(input);
             if (inputIsComplete()) {
                 process();
                 state = SENDING;
-                key.interestOps(SelectionKey.OP_WRITE);
+                selectionKey.interestOps(SelectionKey.OP_WRITE);
             }
         }
 
         void send() throws IOException {
             output.flip();
-            socket.write(output);
+            socketChannel.write(output);
             if (outputIsComplete()) {
-                key.cancel();
+                selectionKey.cancel();
             }
             state = READING;
-            key.interestOps(SelectionKey.OP_READ);
+            selectionKey.interestOps(SelectionKey.OP_READ);
         }
     }
 

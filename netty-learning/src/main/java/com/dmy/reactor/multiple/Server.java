@@ -7,13 +7,23 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Created by DMY on 2018/9/17 17:10
  */
 public class Server {
-    private static Reactor mainReactor;//主要负责接收请求
-    private static Reactor[] subReactors;//负责处理IO
+    /**
+     * 主要负责接收客户端请求
+     */
+    private static Reactor mainReactor;
+
+    /**
+     * 负责处理IO操作
+     */
+    private static Reactor[] subReactors;
     private static final int SUB_SIZE = 3;
     private static final int port = 1234;
 
     private static AtomicInteger nextIndex = new AtomicInteger();
 
+    /**
+     * 轮询获得下一个subReactor来处理IO事件
+     */
     public static Reactor nextSubReactor() {
         long nextIndexValue = nextIndex.getAndIncrement();
         if (nextIndexValue < 0) {
