@@ -34,12 +34,14 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
      * 对于每个客户端传入的消息都需要调用该方法进行处理：业务处理逻辑实现对接收到的消息进行输出并回传给客户端
      */
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) {
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         ByteBuf in = (ByteBuf) msg;
         System.out.println("EchoServer received: " + in.toString(CharsetUtil.UTF_8));
         // write方法是异步的，channelRead方法返回后write方法仍然可能未完成，因此不能直接释放ByteBuf内存
         // 这也是为什么客户端和服务器使用不同的Handler原因
         ctx.write(in);
+        // 记录方法调用，并将事件传递给下一个ChannelHandler
+        ctx.fireChannelRead(msg);
     }
 
     /**
