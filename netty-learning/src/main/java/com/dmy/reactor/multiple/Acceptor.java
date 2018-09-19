@@ -26,7 +26,7 @@ public class Acceptor implements Runnable {
                 // 使用的主从结构,一个主selector负责接收,其他的负责处理IO
                 Selector selector2 = Server.nextSubReactor().getSelector();
                 System.out.println(selector2 + " clientChannel not null..." + socketChannel);
-                new Handler(selector2, socketChannel);
+                new Handler(selector2, socketChannel).run();
             }
         } catch (Exception e) {
             e.printStackTrace();

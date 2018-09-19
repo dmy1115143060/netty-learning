@@ -1,6 +1,5 @@
 package com.dmy.netty.echo.run;
 
-import com.dmy.netty.echo.handler.DiscardHandler;
 import com.dmy.netty.echo.handler.EchoServerHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
@@ -15,6 +14,20 @@ import java.net.InetSocketAddress;
 
 /**
  * Created by DMY on 2018/9/12 17:03
+ * Netty支持三种Reactor模型：
+ * (1)单线程：
+ *    EventLoopGroup group = new NioEventLoopGroup();
+ *    ServerBootstrap bootstrap = new ServerBootstrap().group(group);
+ *
+ *  (2)多线程：
+ *     EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+ *     EventLoopGroup workerGroup = new NioEventLoopGroup();
+ *     ServerBootstrap bootstrap = new ServerBootstrap().group(bossGroup, workerGroup);
+ *
+ *  (3)主从多线程：
+ *     EventLoopGroup bossGroup = new NioEventLoopGroup();
+ *     EventLoopGroup workerGroup = new NioEventLoopGroup();
+ *     ServerBootstrap bootstrap = new ServerBootstrap().group(bossGroup, workerGroup);
  */
 public class EchoServer {
 

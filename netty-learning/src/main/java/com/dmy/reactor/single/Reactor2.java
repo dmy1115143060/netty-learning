@@ -58,7 +58,7 @@ public class Reactor2 implements Runnable {
                 SocketChannel c = serverSocketChannel.accept();
                 if (c != null) {
                     System.out.println("New Connection ...");
-                    new Handler2(selector, c);
+                    new Handler2(selector, c).run();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
